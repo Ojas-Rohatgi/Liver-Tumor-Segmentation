@@ -1,4 +1,4 @@
-# **2.5D Liver and Tumor Segmentation Pipeline**
+# **2.5D Liver and Tumor Segmentation**
 
 This project implements a 2-stage (Liver -> Tumor) cascade using a 2.5D U-Net for segmenting the liver and tumors from 3D CT scans.
 
@@ -8,30 +8,30 @@ The full pipeline includes data conversion from PNGs, data preprocessing, a 2-st
 ```
 LITS_Final_Project/
 │
-├── 📁 3Dircadb1/                 (NIfTI volumes, *output* of Step 0)
-├── 📁 LITS_Challenge_Data/       (Original raw .nii data, *input* for Step 0)
+├── 3Dircadb1/                 (NIfTI volumes, *output* of Step 0)
+├── LITS_Challenge_Data/       (Original raw .nii data, *input* for Step 0)
 │
-├── 📁 data_2_5d_liver/         (Processed slices for liver model)
-├── 📁 data_2_5d_tumor_GT/      (Processed slices for tumor model)
+├── data_2_5d_liver/         (Processed slices for liver model)
+├── data_2_5d_tumor_GT/      (Processed slices for tumor model)
 │
-├── 📁 trained_models/          (Final .pth models are saved here)
-├── 📁 results/                 (Final .csv and plots are saved here)
-├── 📁 web_app/                 (Contains the Flask web demo)
+├── trained_models/          (Final .pth models are saved here)
+├── results/                 (Final .csv and plots are saved here)
+├── web_app/                 (Contains the Flask web demo)
 │   ├── app.py
 │   ├── inference_worker.py
 │   └── index.html
 │
-├── 📜 3Dircadb1_data_conversion.py (Step 0: Converts PNGs to NIfTI)
-├── 📜 model_unet_2.5d.py           (U-Net architecture)
+├── 3Dircadb1_data_conversion.py (Step 0: Converts PNGs to NIfTI)
+├── model_unet_2.5d.py           (U-Net architecture)
 │
-├── 📜 01_preprocess_liver.py       (Step 1a: Create liver slices)
-├── 📜 01_preprocess_tumor.py       (Step 1b: Create tumor slices)
-├── 📜 02_train_liver.py            (Step 2a: Train liver model)
-├── 📜 02_train_tumor.py            (Step 2b: Train tumor model)
-├── 📜 03_evaluate_cascade.py       (Step 3: Run full evaluation)
-├── 📜 04_analyze_results.py        (Step 4: Analyze CSV)
-├── 📜 05_predict_single.py         (Step 5: Visualize a single scan)
-└── 📜 README.md                    
+├── 01_preprocess_liver.py       (Step 1a: Create liver slices)
+├── 01_preprocess_tumor.py       (Step 1b: Create tumor slices)
+├── 02_train_liver.py            (Step 2a: Train liver model)
+├── 02_train_tumor.py            (Step 2b: Train tumor model)
+├── 03_evaluate_cascade.py       (Step 3: Run full evaluation)
+├── 04_analyze_results.py        (Step 4: Analyze CSV)
+├── 05_predict_single.py         (Step 5: Visualize a single scan)
+└── README.md                    
 ```
 
 ## **Full Pipeline Workflow**

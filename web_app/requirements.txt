@@ -1,0 +1,11 @@
+flask
+gunicorn
+celery
+redis
+torch
+numpy
+nibabel
+scipy
+matplotlib
+plotly
+scikit-image

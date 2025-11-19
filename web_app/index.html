@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liver & Tumor Segmentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Simple keyframe animations for the loader */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loader {
+            animation: spin 1s linear infinite;
+            border-top-color: #3498db;
+        }
+
+        /* */
+        .drag-over {
+            border-style: dashed;
+            border-color: #3498db;
+            background-color: #1a2c41;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto">
+
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">Liver & Tumor Segmentation</h1>
+            <p class="text-lg text-gray-400">Powered by a 2.5D U-Net 2-Stage Cascade</p>
+        </header>
+
+        <div id="upload-box" class="bg-gray-800 p-8 rounded-lg shadow-2xl border border-gray-700 relative">
+            <h2 class="text-2xl font-semibold mb-5 text-center">Upload NIfTI Scan</h2>
+
+            <form id="upload-form" class="space-y-6">
+                <div>
+                    <label id="drop-zone" for="file-upload"
+                           class="relative flex flex-col items-center justify-center w-full h-48 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-700 hover:bg-gray-600 transition-colors">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 15l0 6m0-6l4-4m-4 4l-4-4"></path></svg>
+                            <p class="mb-2 text-sm text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p class="text-xs text-gray-500">NIfTI files only (.nii or .nii.gz)</p>
+                        </div>
+                        <input id="file-upload" name="file" type="file" accept=".nii,.nii.gz" required class="hidden" />
+                    </label>
+
+                    <p id="file-name" class="text-center text-sm text-gray-400 mt-3 h-5"></p>
+                </div>
+
+                <button type="submit" id="submit-button"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg
+                               transition duration-300 ease-in-out
+                               flex items-center justify-center space-x-2
+                               disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 15l0 6m0-6l4-4m-4 4l-4-4"></path></svg>
+                    <span>Start Segmentation</span>
+                </button>
+            </form>
+        </div>
+
+        <div id="status-box" class="mt-10 bg-gray-800 p-8 rounded-lg shadow-2xl border border-gray-700 hidden">
+            <div id="loading-state" class="flex flex-col items-center text-gray-400 hidden">
+                <div class="loader w-12 h-12 border-4 border-gray-600 rounded-full mb-4"></div>
+                <p id="status-message" class="text-lg">Processing... This may take several minutes.</p>
+                <p class="text-sm">(Please keep this page open)</p>
+            </div>
+            <div id="error-state" class="hidden text-center">
+                <div class="w-16 h-16 bg-red-200 text-red-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                </div>
+                <h3 class="text-xl font-semibold text-red-400 mb-2">Inference Failed</h3>
+                <p id="error-message" class="bg-gray-900 p-3 rounded-md text-gray-300 font-mono text-sm"></p>
+                <button onclick="resetUI()" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Try Again</button>
+            </div>
+            <div id="success-state" class="hidden space-y-8">
+                <div class="w-16 h-16 bg-green-200 text-green-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                     <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                </div>
+                <h3 class="text-xl text-center font-semibold text-green-400">Segmentation Complete!</h3>
+                <div>
+                    <h4 class="text-lg font-semibold mb-3">2D Slice Prediction</h4>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <img id="result-image" src="" alt="2D Segmentation Result" class="w-full h-auto rounded-md shadow-lg"/>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-3">3D Interactive Plot</h4>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <iframe id="result-3d" class="w-full h-[600px] rounded-md shadow-lg border-none" src=""></iframe>
+                    </div>
+                </div>
+                <button onclick="resetUI()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">Run Another Scan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- (all variable definitions are the same) ---
+        const uploadForm = document.getElementById('upload-form');
+        const submitButton = document.getElementById('submit-button');
+        const fileUpload = document.getElementById('file-upload');
+        const fileNameDisplay = document.getElementById('file-name');
+        const dropZone = document.getElementById('drop-zone');
+        const uploadBox = document.getElementById('upload-box');
+        const statusBox = document.getElementById('status-box');
+        const loadingState = document.getElementById('loading-state');
+        const statusMessage = document.getElementById('status-message');
+        const errorState = document.getElementById('error-state');
+        const errorMessage = document.getElementById('error-message');
+        const successState = document.getElementById('success-state');
+        const resultImage = document.getElementById('result-image');
+        const result3D = document.getElementById('result-3d');
+
+        let pollInterval;
+        let currentTaskID = null; // <-- RENAMED from currentPID
+        let currentRequestID = null;
+
+        // --- (File name/drag-drop functions are the same) ---
+        function updateFileName() {
+            if (fileUpload.files.length > 0) {
+                fileNameDisplay.textContent = fileUpload.files[0].name;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        }
+        fileUpload.addEventListener('change', updateFileName);
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('drag-over'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                fileUpload.files = e.dataTransfer.files;
+                fileUpload.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // --- (Upload form submit handler is slightly changed) ---
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (fileUpload.files.length === 0) {
+                showError("Please select a file first.");
+                return;
+            }
+            const formData = new FormData(uploadForm);
+            submitButton.disabled = true;
+            submitButton.querySelector('span').textContent = 'Uploading...';
+            uploadBox.classList.add('hidden');
+            statusBox.classList.remove('hidden');
+            loadingState.classList.remove('hidden');
+            errorState.classList.add('hidden');
+            successState.classList.add('hidden');
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'File upload failed.');
+                }
+                const data = await response.json();
+
+                // --- UPDATED: Store task_id, not pid ---
+                currentTaskID = data.task_id;
+                currentRequestID = data.request_id;
+
+                statusMessage.textContent = 'Task queued. Waiting for worker...';
+                pollInterval = setInterval(checkStatus, 3000); // Poll every 3 seconds
+
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        // --- UPDATED: checkStatus function ---
+        async function checkStatus() {
+            if (!currentTaskID) return;
+
+            try {
+                // --- UPDATED: Poll the new endpoint ---
+                const response = await fetch(`/status/${currentTaskID}`);
+                const data = await response.json();
+
+                // --- UPDATED: Handle new Celery states ---
+                if (data.status === 'RUNNING' || data.status === 'PENDING') {
+                    console.log(`Task status: ${data.status}`);
+                    // Update the status message with progress
+                    statusMessage.textContent = data.message;
+
+                } else if (data.status === 'COMPLETE') {
+                    console.log('Inference complete!');
+                    clearInterval(pollInterval);
+                    showSuccess();
+
+                } else if (data.status === 'ERROR') {
+                    clearInterval(pollInterval);
+                    showError(data.message || 'Unknown error during inference.');
+                }
+
+            } catch (error) {
+                clearInterval(pollInterval);
+                showError('Lost connection to server.');
+            }
+        }
+
+        // --- (showSuccess is the same) ---
+        function showSuccess() {
+            loadingState.classList.add('hidden');
+            const imgPath = `/results/${currentRequestID}/prediction_2d.png?t=${new Date().getTime()}`;
+            const htmlPath = `/results/${currentRequestID}/prediction_3d.html?t=${new Date().getTime()}`;
+            resultImage.src = imgPath;
+            result3D.src = htmlPath;
+            successState.classList.remove('hidden');
+        }
+
+        // --- (showError is the same) ---
+        function showError(message) {
+            loadingState.classList.add('hidden');
+            errorMessage.textContent = message;
+            errorState.classList.remove('hidden');
+        }
+
+        // --- UPDATED: resetUI ---
+        function resetUI() {
+            // --- UPDATED: Clear task_id ---
+            currentTaskID = null;
+            currentRequestID = null;
+            clearInterval(pollInterval);
+
+            statusBox.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            errorState.classList.add('hidden');
+            successState.classList.add('hidden');
+            uploadBox.classList.remove('hidden');
+            uploadForm.reset();
+            submitButton.disabled = false;
+            submitButton.querySelector('span').textContent = 'Start Segmentation';
+            resultImage.src = '';
+            result3D.src = '';
+            fileNameDisplay.textContent = '';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# docker-compose.yml
+version: "3.8"
+
+services:
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  app:
+    # UPDATED: The build context is now the current directory ('.')
+    # because the Dockerfile is right here.
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      # UPDATED: The host path is relative to this file.
+      - ./static:/app/static
+      - ./uploads:/app/uploads
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  worker:
+    # UPDATED: Use the same build context ('.')
+    build: .
+    command: ["celery", "-A", "tasks.celery", "worker", "--loglevel=info"]
+    volumes:
+      # UPDATED: Go UP one directory ('../') to find trained_models
+      - ../trained_models:/app/trained_models:ro
+
+      # UPDATED: These paths are now local
+      - ./static:/app/static
+      - ./uploads:/app/uploads
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+
+volumes:
+  redis_data:

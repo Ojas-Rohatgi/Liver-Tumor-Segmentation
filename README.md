@@ -4,6 +4,10 @@ This project implements a 2-stage (Liver -> Tumor) cascade using a 2.5D U-Net fo
 
 The full pipeline includes data conversion from PNGs, data preprocessing, a 2-stage model training process, full evaluation, and a web application for inference.
 
+ALL USED DATASET ARE PUBLICALLY AVAILABLE
+LITS CHALLENGE DATASET: https://competitions.codalab.org/competitions/17094 (REQUIRES PARTICIPATION)
+3D-IRCAD-b1 DATASET: https://www.ircad.fr/research/data-sets/liver-segmentation-3d-ircadb-01/
+
 ## **Project Structure**
 ```
 LITS_Final_Project/

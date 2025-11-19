@@ -106,5 +106,19 @@ cd web_app
 python app.py
 
 # 3. Open your browser and go to:
-# http://127.0.0.1:5000
+# http://localhost:5000
+```
+
+## **Recommendation**
+Your can also run this using Docker.
+```
+# 1. Navigate into the web_app directory
+cd web_app
+
+# 2a. Install docker desktop and start the docker engine
+# 2b. Run docker compose
+docker compose build
+
+# 3. Open your browser and go to:
+# http://localhost:5000
 ```
